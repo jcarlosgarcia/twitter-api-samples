@@ -9,10 +9,13 @@ abort usage unless keywords = ARGV.shift
 
 def track(user, password, keywords)
   EventMachine.run do
-    http = EventMachine::HttpRequest.new("https://stream.twitter.com/1.1/statuses/filter.json").post(
+    http = EventMachine::HttpRequest.new("https://stream.twitter.com/1.1/statuses/filter.json",
+      :connection_timeout => 0,
+      :inactivity_timeout => 0).post(
       :head => {'Authorization' => [user, password]}, 
       :body => {'track' => keywords},
-      :keepalive => true)
+      :keepalive => true,
+      :timeout => -1)
 
       buffer = ""
       http.stream do |chunk|
@@ -23,6 +26,12 @@ def track(user, password, keywords)
         end
 
       end
+
+      http.errback {
+        puts Time.new.to_s + " Error: "
+        puts http.error
+      }
+
   end  
   rescue => ex
     puts "Error " + ex.to_s
